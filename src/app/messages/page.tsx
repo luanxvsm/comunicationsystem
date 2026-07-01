@@ -3,16 +3,18 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { MessageTable } from "@/components/MessageTable";
+import { NotificationForm } from "@/components/NotificationForm";
 import type { MessageType, MessageStatus } from "@/types";
 
 type StatusFilter = MessageStatus | "ALL";
 type TypeFilter = MessageType | "ALL";
 
 export default function MessagesPage() {
+  const [showModal, setShowModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("ALL");
 
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
     trpc.messages.list.useInfiniteQuery(
       {
         limit: 20,
@@ -45,10 +47,21 @@ export default function MessagesPage() {
   return (
     <>
       <div className="page-header">
-        <h1 className="page-title">Mensagens</h1>
-        <p className="page-subtitle">
-          Histórico completo de todas as mensagens enviadas
-        </p>
+        <div className="flex items-center justify-between" style={{ width: "100%" }}>
+          <div>
+            <h1 className="page-title">Mensagens</h1>
+            <p className="page-subtitle">
+              Histórico completo de todas as mensagens enviadas
+            </p>
+          </div>
+          <button
+            id="send-notif-btn-msg"
+            className="btn-primary"
+            onClick={() => setShowModal(true)}
+          >
+            🚀 Disparar Mensagem
+          </button>
+        </div>
       </div>
 
       {/* Filtros de status */}
@@ -95,6 +108,30 @@ export default function MessagesPage() {
           </div>
         )}
       </div>
+
+      {/* Modal de Disparo de Mensagem */}
+      {showModal && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">🚀 Disparar Nova Mensagem</h2>
+              <button
+                id="modal-close-btn"
+                className="modal-close"
+                onClick={() => setShowModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <NotificationForm
+              onSuccess={() => {
+                setShowModal(false);
+                refetch();
+              }}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }

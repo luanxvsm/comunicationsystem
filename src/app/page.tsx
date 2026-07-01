@@ -1,7 +1,7 @@
 "use client";
-// src/app/page.tsx — Dashboard principal
-import type { Metadata } from "next";
+import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { NotificationForm } from "@/components/NotificationForm";
 
 function StatCard({
   icon,
@@ -26,24 +26,43 @@ function StatCard({
 }
 
 function DashboardContent() {
-  const { data: stats, isLoading } = trpc.messages.stats.useQuery();
-  const { data: messagesData, isLoading: msgLoading } =
+  const [showModal, setShowModal] = useState(false);
+
+  const { data: stats, isLoading, refetch: refetchStats } = trpc.messages.stats.useQuery();
+  const { data: messagesData, isLoading: msgLoading, refetch: refetchMessages } =
     trpc.messages.list.useQuery({ limit: 5 });
 
   const byTypeMap = Object.fromEntries(
     (stats?.byType ?? []).map((t) => [t.messageType, t._count.id])
   );
 
+  function handleSuccess() {
+    setShowModal(false);
+    refetchStats();
+    refetchMessages();
+  }
+
   return (
     <>
       <div className="page-header">
-        <h1 className="page-title">
-          Dashboard{" "}
-          <span className="gradient-text">CommHub</span>
-        </h1>
-        <p className="page-subtitle">
-          Visão geral do sistema de comunicação multi-canal
-        </p>
+        <div className="flex items-center justify-between" style={{ width: "100%" }}>
+          <div>
+            <h1 className="page-title">
+              Dashboard{" "}
+              <span className="gradient-text">CommHub</span>
+            </h1>
+            <p className="page-subtitle">
+              Visão geral do sistema de comunicação multi-canal
+            </p>
+          </div>
+          <button
+            id="send-notif-btn"
+            className="btn-primary"
+            onClick={() => setShowModal(true)}
+          >
+            🚀 Disparar Mensagem
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -192,6 +211,25 @@ function DashboardContent() {
           </div>
         )}
       </div>
+
+      {/* Modal de Disparo de Mensagem */}
+      {showModal && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">🚀 Disparar Nova Mensagem</h2>
+              <button
+                id="modal-close-btn"
+                className="modal-close"
+                onClick={() => setShowModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <NotificationForm onSuccess={handleSuccess} />
+          </div>
+        </div>
+      )}
     </>
   );
 }

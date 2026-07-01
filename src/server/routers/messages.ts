@@ -1,8 +1,45 @@
 // src/server/routers/messages.ts
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/trpc";
+import { messageDispatcher } from "@/server/services/messageDispatcher";
 
 export const messagesRouter = createTRPCRouter({
+  /**
+   * Envia uma mensagem direta a partir da interface do dashboard.
+   */
+  send: publicProcedure
+    .input(
+      z.object({
+        messageType: z.enum(["EMAIL", "SMS", "WHATSAPP", "PUSH"]),
+        to: z.string().min(1, "Destinatário é obrigatório"),
+        subject: z.string().optional(),
+        body: z.string().min(1, "Mensagem é obrigatória"),
+        templateId: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const message = await ctx.db.message.create({
+        data: {
+          from: "Dashboard",
+          to: input.to,
+          subject: input.subject,
+          body: input.body,
+          email: input.messageType === "EMAIL" ? input.to : undefined,
+          phone: input.messageType !== "EMAIL" ? input.to : undefined,
+          messageType: input.messageType,
+          status: "PENDING",
+          templateId: input.templateId,
+        },
+      });
+
+      // Despacha em background
+      messageDispatcher(message.id).catch((err) => {
+        console.error(`[tRPC Direct Send] Erro no envio ${message.id}:`, err);
+      });
+
+      return { success: true, messageId: message.id };
+    }),
+
   /**
    * Lista todas as mensagens, ordenadas por data de criação (mais recentes primeiro).
    */
