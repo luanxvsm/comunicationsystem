@@ -1,0 +1,32 @@
+// src/server/trpc.ts
+import { initTRPC } from "@trpc/server";
+import superjson from "superjson";
+import { ZodError } from "zod";
+import { db } from "@/server/db";
+
+/**
+ * O contexto tRPC é criado por request e disponibiliza o client do banco.
+ */
+export const createTRPCContext = async () => {
+  return { db };
+};
+
+export type TRPCContext = Awaited<ReturnType<typeof createTRPCContext>>;
+
+const t = initTRPC.context<TRPCContext>().create({
+  transformer: superjson,
+  errorFormatter({ shape, error }) {
+    return {
+      ...shape,
+      data: {
+        ...shape.data,
+        zodError:
+          error.cause instanceof ZodError ? error.cause.flatten() : null,
+      },
+    };
+  },
+});
+
+export const createCallerFactory = t.createCallerFactory;
+export const createTRPCRouter = t.router;
+export const publicProcedure = t.procedure;

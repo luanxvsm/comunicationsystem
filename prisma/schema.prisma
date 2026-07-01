@@ -1,0 +1,66 @@
+// This is your Prisma schema file
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MessageType {
+  EMAIL
+  SMS
+  WHATSAPP
+  PUSH
+}
+
+enum MessageStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model Contact {
+  id        String    @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  messages  Message[]
+}
+
+model Message {
+  id          String        @id @default(cuid())
+  from        String
+  to          String
+  subject     String?
+  body        String
+  email       String?
+  phone       String?
+  messageType MessageType
+  status      MessageStatus @default(PENDING)
+  error       String?
+  sentAt      DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  contactId   String?
+  contact     Contact?      @relation(fields: [contactId], references: [id])
+  templateId  String?
+  template    Template?     @relation(fields: [templateId], references: [id])
+}
+
+model Template {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  messageType MessageType
+  subject     String?
+  body        String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  messages    Message[]
+}
