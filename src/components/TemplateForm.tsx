@@ -13,6 +13,7 @@ interface TemplateFormProps {
     messageType: MessageType;
     subject?: string | null;
     body: string;
+    imageUrl?: string | null;
   };
 }
 
@@ -33,7 +34,10 @@ export function TemplateForm({ onSuccess, initialData }: TemplateFormProps) {
     messageType: (initialData?.messageType ?? "EMAIL") as MessageType,
     subject: initialData?.subject ?? "",
     body: initialData?.body ?? "",
+    imageUrl: initialData?.imageUrl ?? "",
   });
+
+  const [imageError, setImageError] = useState(false);
 
   // Detecta variáveis no assunto e no corpo em tempo real
   const detectedVariables = Array.from(
@@ -63,10 +67,23 @@ export function TemplateForm({ onSuccess, initialData }: TemplateFormProps) {
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
+  // Canais que suportam imagem
+  const supportsImage =
+    form.messageType === "EMAIL" ||
+    form.messageType === "WHATSAPP" ||
+    form.messageType === "SMS";
+
   function validate() {
     const newErrors: Record<string, string> = {};
     if (!form.name.trim()) newErrors.name = "Nome é obrigatório";
     if (!form.body.trim()) newErrors.body = "Corpo é obrigatório";
+    if (form.imageUrl.trim()) {
+      try {
+        new URL(form.imageUrl.trim());
+      } catch {
+        newErrors.imageUrl = "URL de imagem inválida";
+      }
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -81,6 +98,7 @@ export function TemplateForm({ onSuccess, initialData }: TemplateFormProps) {
       messageType: form.messageType,
       subject: form.subject || undefined,
       body: form.body,
+      imageUrl: form.imageUrl.trim() || undefined,
     };
 
     if (isEdit && initialData) {
@@ -134,9 +152,10 @@ export function TemplateForm({ onSuccess, initialData }: TemplateFormProps) {
           id="template-type"
           className="form-select"
           value={form.messageType}
-          onChange={(e) =>
-            setForm({ ...form, messageType: e.target.value as MessageType })
-          }
+          onChange={(e) => {
+            setForm({ ...form, messageType: e.target.value as MessageType, imageUrl: "" });
+            setImageError(false);
+          }}
         >
           {messageTypeOptions.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -182,11 +201,11 @@ export function TemplateForm({ onSuccess, initialData }: TemplateFormProps) {
                 key={v}
                 style={{
                   fontSize: "0.7rem",
-                  background: "rgba(99, 102, 241, 0.15)",
-                  color: "#818cf8",
+                  background: "var(--accent-primary-glow)",
+                  color: "var(--accent-primary)",
                   padding: "0.15rem 0.45rem",
                   borderRadius: "var(--radius-sm, 4px)",
-                  border: "1px solid rgba(99, 102, 241, 0.3)",
+                  border: "1px solid var(--border-subtle)",
                   fontWeight: 600
                 }}
               >
@@ -201,6 +220,58 @@ export function TemplateForm({ onSuccess, initialData }: TemplateFormProps) {
         )}
         {errors.body && <p className="form-error">{errors.body}</p>}
       </div>
+
+      {/* Campo de imagem — visível apenas para canais que suportam */}
+      {supportsImage && (
+        <div className="form-group">
+          <label htmlFor="template-image-url" className="form-label">
+            🖼️ URL da Imagem{" "}
+            <span style={{ fontWeight: 400, color: "var(--text-muted)" }}>(opcional)</span>
+          </label>
+          <input
+            id="template-image-url"
+            type="url"
+            className={`form-input ${errors.imageUrl ? "form-input-error" : ""}`}
+            placeholder="https://exemplo.com/imagem.jpg"
+            value={form.imageUrl}
+            onChange={(e) => {
+              setForm({ ...form, imageUrl: e.target.value });
+              setImageError(false);
+              if (errors.imageUrl) {
+                const updated = { ...errors };
+                delete updated.imageUrl;
+                setErrors(updated);
+              }
+            }}
+          />
+          {errors.imageUrl && <p className="form-error">{errors.imageUrl}</p>}
+
+          {/* Preview inline da imagem */}
+          {form.imageUrl.trim() && !errors.imageUrl && (
+            <div className="image-preview-box">
+              {imageError ? (
+                <div className="image-preview-error">
+                  ⚠️ Não foi possível carregar a imagem. Verifique a URL.
+                </div>
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={form.imageUrl}
+                  alt="Preview da imagem"
+                  className="image-preview-img"
+                  onError={() => setImageError(true)}
+                  onLoad={() => setImageError(false)}
+                />
+              )}
+            </div>
+          )}
+          <p className="form-hint">
+            {form.messageType === "EMAIL" && "A imagem será embutida no corpo do e-mail."}
+            {form.messageType === "WHATSAPP" && "A imagem será enviada como mídia pelo WhatsApp (Twilio)."}
+            {form.messageType === "SMS" && "A imagem será enviada como MMS (suporte limitado fora dos EUA)."}
+          </p>
+        </div>
+      )}
 
       {(createMutation.error || updateMutation.error) && (
         <div className="form-server-error">

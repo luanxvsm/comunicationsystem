@@ -39,6 +39,7 @@ model Message {
   to                String
   subject           String?
   body              String
+  imageUrl          String?       // URL pública de imagem opcional
   email             String?
   phone             String?
   messageType       MessageType
@@ -61,6 +62,7 @@ model Template {
   messageType MessageType
   subject     String?
   body        String
+  imageUrl    String?     // URL pública de imagem opcional
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   messages    Message[]

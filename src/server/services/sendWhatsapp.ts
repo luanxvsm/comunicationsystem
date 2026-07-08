@@ -31,6 +31,8 @@ export async function sendWhatsapp(message: Message): Promise<string | undefined
       body: message.body,
       from: process.env.TWILIO_WHATSAPP_NUMBER!,
       to: formattedTo,
+      // Passa a imagem como mediaUrl se existir (Twilio suporta mídia no WhatsApp)
+      ...(message.imageUrl ? { mediaUrl: [message.imageUrl] } : {}),
     });
     return result.sid;
   } catch (err: unknown) {

@@ -14,6 +14,7 @@ export const messagesRouter = createTRPCRouter({
         to: z.string().min(1, "Destinatário é obrigatório"),
         subject: z.string().optional(),
         body: z.string().min(1, "Mensagem é obrigatória"),
+        imageUrl: z.string().url("URL de imagem inválida").optional(),
         templateId: z.string().optional(),
       })
     )
@@ -24,6 +25,7 @@ export const messagesRouter = createTRPCRouter({
           to: input.to,
           subject: input.subject,
           body: input.body,
+          imageUrl: input.imageUrl,
           email: input.messageType === "EMAIL" ? input.to : undefined,
           phone: input.messageType !== "EMAIL" ? input.to : undefined,
           messageType: input.messageType,

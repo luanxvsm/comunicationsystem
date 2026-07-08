@@ -853,3 +853,35 @@ body,
     border-color var(--transition),
     color var(--transition);
 }
+
+/* =========================================
+   IMAGE PREVIEW
+   ========================================= */
+
+.image-preview-box {
+  margin-top: 0.65rem;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  max-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+.image-preview-img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  display: block;
+}
+
+.image-preview-error {
+  padding: 1rem;
+  font-size: 0.8rem;
+  color: var(--accent-danger);
+  text-align: center;
+}
+

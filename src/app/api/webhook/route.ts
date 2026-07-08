@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
         to: payload.to,
         subject,
         body,
+        imageUrl: payload.imageUrl,
         email: payload.email,
         phone: payload.phone,
         messageType: payload.messageType,

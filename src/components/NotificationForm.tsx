@@ -17,6 +17,8 @@ export function NotificationForm({ onSuccess }: NotificationFormProps) {
   const [to, setTo] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageError, setImageError] = useState(false);
 
   // Estado dos templates
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
@@ -54,6 +56,9 @@ export function NotificationForm({ onSuccess }: NotificationFormProps) {
 
     setVariableKeys(uniqueKeys);
     
+    // Preenche imageUrl do template se existir
+    if (template.imageUrl) setImageUrl(template.imageUrl);
+
     // Inicializa valores vazios para as variáveis
     const initialVars: Record<string, string> = {};
     uniqueKeys.forEach((key) => {
@@ -71,7 +76,9 @@ export function NotificationForm({ onSuccess }: NotificationFormProps) {
     ? renderTemplate(template.body, templateVariables)
     : body;
 
-  // Estado dos erros de variáveis específicas
+  // Canais que suportam imagem
+  const supportsImage = messageType === "EMAIL" || messageType === "WHATSAPP" || messageType === "SMS";
+
   function validate() {
     const newErrors: Record<string, string> = {};
     if (!to.trim()) {
@@ -88,12 +95,19 @@ export function NotificationForm({ onSuccess }: NotificationFormProps) {
         newErrors.body = "Mensagem é obrigatória";
       }
     } else {
-      // Valida cada variável individualmente
       variableKeys.forEach((key) => {
         if (!templateVariables[key]?.trim()) {
           newErrors[`var-${key}`] = `Preenchimento de {{${key}}} é obrigatório`;
         }
       });
+    }
+
+    if (imageUrl.trim()) {
+      try {
+        new URL(imageUrl.trim());
+      } catch {
+        newErrors.imageUrl = "URL de imagem inválida";
+      }
     }
 
     setErrors(newErrors);
@@ -109,6 +123,7 @@ export function NotificationForm({ onSuccess }: NotificationFormProps) {
       to,
       subject: selectedTemplateId ? previewSubject : (messageType === "EMAIL" ? subject : undefined),
       body: selectedTemplateId ? previewBody : body,
+      imageUrl: imageUrl.trim() || undefined,
       templateId: selectedTemplateId || undefined,
     });
   }
@@ -136,7 +151,7 @@ export function NotificationForm({ onSuccess }: NotificationFormProps) {
           <span
             key={`preview-var-${matchIndex}`}
             style={{
-              color: "#34d399", // Verde
+              color: "#34d399",
               background: "rgba(52, 211, 153, 0.15)",
               padding: "0.1rem 0.35rem",
               borderRadius: "var(--radius-sm, 4px)",
@@ -153,7 +168,7 @@ export function NotificationForm({ onSuccess }: NotificationFormProps) {
           <span
             key={`preview-empty-${matchIndex}`}
             style={{
-              color: "#f87171", // Vermelho
+              color: "#f87171",
               background: "rgba(248, 113, 113, 0.15)",
               padding: "0.1rem 0.35rem",
               borderRadius: "var(--radius-sm, 4px)",
@@ -187,10 +202,12 @@ export function NotificationForm({ onSuccess }: NotificationFormProps) {
           value={messageType}
           onChange={(e) => {
             setMessageType(e.target.value as MessageType);
-            setSelectedTemplateId(""); // Reseta template ao mudar de canal
+            setSelectedTemplateId("");
             setTo("");
             setSubject("");
             setBody("");
+            setImageUrl("");
+            setImageError(false);
           }}
         >
           <option value="EMAIL">✉️ Email</option>
@@ -299,7 +316,7 @@ export function NotificationForm({ onSuccess }: NotificationFormProps) {
         </>
       ) : (
         /* Preview de Envio do Template */
-        <div className="card" style={{ background: "rgba(99, 102, 241, 0.05)", border: "1px dashed var(--border-subtle)" }}>
+        <div className="card" style={{ background: "rgba(249, 115, 22, 0.05)", border: "1px dashed var(--border-subtle)" }}>
           <p className="form-label" style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.5rem" }}>
             Visualização da mensagem a ser enviada:
           </p>
@@ -312,6 +329,58 @@ export function NotificationForm({ onSuccess }: NotificationFormProps) {
           <div style={{ fontSize: "0.825rem", color: "var(--text-primary)", fontFamily: "monospace", whiteSpace: "pre-wrap", background: "var(--bg-base)", padding: "0.75rem", borderRadius: "var(--radius-sm)", lineHeight: "1.5" }}>
             {template?.body ? renderRichPreview(template.body, templateVariables) : previewBody}
           </div>
+        </div>
+      )}
+
+      {/* Campo de imagem — visível apenas para canais que suportam */}
+      {supportsImage && (
+        <div className="form-group">
+          <label htmlFor="notif-image-url" className="form-label">
+            🖼️ URL da Imagem{" "}
+            <span style={{ fontWeight: 400, color: "var(--text-muted)" }}>(opcional)</span>
+          </label>
+          <input
+            id="notif-image-url"
+            type="url"
+            className={`form-input ${errors.imageUrl ? "form-input-error" : ""}`}
+            placeholder="https://exemplo.com/imagem.jpg"
+            value={imageUrl}
+            onChange={(e) => {
+              setImageUrl(e.target.value);
+              setImageError(false);
+              if (errors.imageUrl) {
+                const updated = { ...errors };
+                delete updated.imageUrl;
+                setErrors(updated);
+              }
+            }}
+          />
+          {errors.imageUrl && <p className="form-error">{errors.imageUrl}</p>}
+
+          {/* Preview inline da imagem */}
+          {imageUrl.trim() && !errors.imageUrl && (
+            <div className="image-preview-box">
+              {imageError ? (
+                <div className="image-preview-error">
+                  ⚠️ Não foi possível carregar a imagem. Verifique a URL.
+                </div>
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={imageUrl}
+                  alt="Preview da imagem"
+                  className="image-preview-img"
+                  onError={() => setImageError(true)}
+                  onLoad={() => setImageError(false)}
+                />
+              )}
+            </div>
+          )}
+          <p className="form-hint">
+            {messageType === "EMAIL" && "A imagem será embutida no corpo do e-mail."}
+            {messageType === "WHATSAPP" && "A imagem será enviada como mídia pelo WhatsApp (Twilio)."}
+            {messageType === "SMS" && "A imagem será enviada como MMS (suporte limitado fora dos EUA)."}
+          </p>
         </div>
       )}
 

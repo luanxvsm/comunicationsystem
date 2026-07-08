@@ -30,6 +30,9 @@ export async function sendSms(message: Message): Promise<string | undefined> {
       body: message.body,
       from: process.env.TWILIO_PHONE_NUMBER!,
       to: toPhone,
+      // Passa a imagem como mediaUrl (MMS) se existir
+      // Nota: MMS via Twilio tem suporte limitado fora dos EUA
+      ...(message.imageUrl ? { mediaUrl: [message.imageUrl] } : {}),
     });
     return result.sid;
   } catch (err: unknown) {

@@ -8,6 +8,7 @@ export interface MessagePayload {
   to: string;
   subject?: string;
   body: string;
+  imageUrl?: string;
   email?: string;
   phone?: string;
   messageType: MessageType;
@@ -21,6 +22,7 @@ export interface WebhookPayload {
   to: string;
   subject?: string;
   body?: string;
+  imageUrl?: string;
   email?: string;
   phone?: string;
   messageType: MessageType;

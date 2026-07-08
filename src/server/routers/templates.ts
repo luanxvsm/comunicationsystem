@@ -8,6 +8,7 @@ const templateSchema = z.object({
   messageType: z.enum(["EMAIL", "SMS", "WHATSAPP", "PUSH"]),
   subject: z.string().optional(),
   body: z.string().min(1, "Corpo é obrigatório"),
+  imageUrl: z.string().url("URL de imagem inválida").optional(),
 });
 
 export const templatesRouter = createTRPCRouter({
