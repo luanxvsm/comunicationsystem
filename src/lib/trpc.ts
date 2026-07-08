@@ -1,4 +1,3 @@
-"use client";
 // src/lib/trpc.ts — cliente tRPC para uso nos componentes React (Client Components)
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";

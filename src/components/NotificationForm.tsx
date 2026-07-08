@@ -71,6 +71,7 @@ export function NotificationForm({ onSuccess }: NotificationFormProps) {
     ? renderTemplate(template.body, templateVariables)
     : body;
 
+  // Estado dos erros de variáveis específicas
   function validate() {
     const newErrors: Record<string, string> = {};
     if (!to.trim()) {
@@ -87,11 +88,12 @@ export function NotificationForm({ onSuccess }: NotificationFormProps) {
         newErrors.body = "Mensagem é obrigatória";
       }
     } else {
-      // Se tiver variáveis pendentes de preenchimento
-      const missingVars = variableKeys.filter((k) => !templateVariables[k]?.trim());
-      if (missingVars.length > 0) {
-        newErrors.variables = "Preencha todas as variáveis do template";
-      }
+      // Valida cada variável individualmente
+      variableKeys.forEach((key) => {
+        if (!templateVariables[key]?.trim()) {
+          newErrors[`var-${key}`] = `Preenchimento de {{${key}}} é obrigatório`;
+        }
+      });
     }
 
     setErrors(newErrors);
@@ -109,6 +111,70 @@ export function NotificationForm({ onSuccess }: NotificationFormProps) {
       body: selectedTemplateId ? previewBody : body,
       templateId: selectedTemplateId || undefined,
     });
+  }
+
+  // Função para renderizar o preview dinâmico com realce de variáveis
+  function renderRichPreview(text: string, vars: Record<string, string>) {
+    if (!text) return null;
+    
+    const parts: React.ReactNode[] = [];
+    const regex = /\{\{(\w+)\}\}/g;
+    let lastIndex = 0;
+    let match;
+    
+    while ((match = regex.exec(text)) !== null) {
+      const varName = match[1];
+      const matchIndex = match.index;
+      
+      if (matchIndex > lastIndex) {
+        parts.push(text.slice(lastIndex, matchIndex));
+      }
+      
+      const val = vars[varName];
+      if (val && val.trim() !== "") {
+        parts.push(
+          <span
+            key={`preview-var-${matchIndex}`}
+            style={{
+              color: "#34d399", // Verde
+              background: "rgba(52, 211, 153, 0.15)",
+              padding: "0.1rem 0.35rem",
+              borderRadius: "var(--radius-sm, 4px)",
+              fontWeight: 600,
+              border: "1px solid rgba(52, 211, 153, 0.3)",
+              display: "inline-block",
+            }}
+          >
+            {val}
+          </span>
+        );
+      } else {
+        parts.push(
+          <span
+            key={`preview-empty-${matchIndex}`}
+            style={{
+              color: "#f87171", // Vermelho
+              background: "rgba(248, 113, 113, 0.15)",
+              padding: "0.1rem 0.35rem",
+              borderRadius: "var(--radius-sm, 4px)",
+              fontWeight: 600,
+              border: "1px dashed #f87171",
+              display: "inline-block",
+            }}
+          >
+            {`{{${varName}}}`}
+          </span>
+        );
+      }
+      
+      lastIndex = regex.lastIndex;
+    }
+    
+    if (lastIndex < text.length) {
+      parts.push(text.slice(lastIndex));
+    }
+    
+    return <>{parts}</>;
   }
 
   return (
@@ -181,17 +247,22 @@ export function NotificationForm({ onSuccess }: NotificationFormProps) {
                 <input
                   id={`var-${key}`}
                   type="text"
-                  className="form-input"
+                  className={`form-input ${errors[`var-${key}`] ? "form-input-error" : ""}`}
                   placeholder={`Valor para {{${key}}}`}
                   value={templateVariables[key] || ""}
-                  onChange={(e) =>
-                    setTemplateVariables({ ...templateVariables, [key]: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setTemplateVariables({ ...templateVariables, [key]: e.target.value });
+                    if (errors[`var-${key}`]) {
+                      const updatedErrors = { ...errors };
+                      delete updatedErrors[`var-${key}`];
+                      setErrors(updatedErrors);
+                    }
+                  }}
                 />
+                {errors[`var-${key}`] && <p className="form-error">{errors[`var-${key}`]}</p>}
               </div>
             ))}
           </div>
-          {errors.variables && <p className="form-error" style={{ marginTop: "0.5rem" }}>{errors.variables}</p>}
         </div>
       )}
 
@@ -233,12 +304,13 @@ export function NotificationForm({ onSuccess }: NotificationFormProps) {
             Visualização da mensagem a ser enviada:
           </p>
           {messageType === "EMAIL" && (
-            <p style={{ fontSize: "0.85rem", fontWeight: 600, marginBottom: "0.25rem" }}>
-              <span style={{ color: "var(--text-secondary)" }}>Assunto:</span> {previewSubject}
+            <p style={{ fontSize: "0.85rem", fontWeight: 600, marginBottom: "0.4rem" }}>
+              <span style={{ color: "var(--text-secondary)" }}>Assunto:</span>{" "}
+              {template?.subject ? renderRichPreview(template.subject, templateVariables) : previewSubject}
             </p>
           )}
-          <div style={{ fontSize: "0.825rem", color: "var(--text-primary)", fontFamily: "monospace", whiteSpace: "pre-wrap", background: "var(--bg-base)", padding: "0.75rem", borderRadius: "var(--radius-sm)" }}>
-            {previewBody}
+          <div style={{ fontSize: "0.825rem", color: "var(--text-primary)", fontFamily: "monospace", whiteSpace: "pre-wrap", background: "var(--bg-base)", padding: "0.75rem", borderRadius: "var(--radius-sm)", lineHeight: "1.5" }}>
+            {template?.body ? renderRichPreview(template.body, templateVariables) : previewBody}
           </div>
         </div>
       )}

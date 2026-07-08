@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { TRPCProvider } from "@/components/TRPCProvider";
 import { Sidebar } from "@/components/Sidebar";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
   title: "Sistema de Comunicação Multi-Canal",
@@ -16,14 +17,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" data-theme="dark">
       <body>
-        <TRPCProvider>
-          <div className="app-shell">
-            <Sidebar />
-            <main className="main-content">{children}</main>
-          </div>
-        </TRPCProvider>
+        <ThemeProvider>
+          <TRPCProvider>
+            <div className="app-shell">
+              <Sidebar />
+              <main className="main-content">{children}</main>
+            </div>
+          </TRPCProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

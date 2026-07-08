@@ -5,16 +5,21 @@
    DESIGN SYSTEM — Sistema de Comunicação
    ========================================= */
 
-:root {
+/* =========================================
+   DARK THEME (default)
+   ========================================= */
+:root,
+[data-theme="dark"] {
   --bg-base: #0a0e1a;
   --bg-surface: #111827;
   --bg-elevated: #1a2235;
   --bg-card: #1e2a3a;
   --bg-hover: #243040;
 
-  --accent-primary: #6366f1;
-  --accent-primary-glow: rgba(99, 102, 241, 0.3);
-  --accent-secondary: #06b6d4;
+  /* Orange accent for dark theme */
+  --accent-primary: #f97316;
+  --accent-primary-glow: rgba(249, 115, 22, 0.3);
+  --accent-secondary: #fb923c;
   --accent-success: #10b981;
   --accent-warning: #f59e0b;
   --accent-danger: #ef4444;
@@ -23,9 +28,9 @@
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
 
-  --border-subtle: rgba(99, 102, 241, 0.15);
+  --border-subtle: rgba(249, 115, 22, 0.2);
   --border-card: rgba(255, 255, 255, 0.07);
-  --border-focus: #6366f1;
+  --border-focus: #f97316;
 
   --radius-sm: 6px;
   --radius-md: 12px;
@@ -33,10 +38,49 @@
   --radius-xl: 24px;
 
   --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 40px rgba(99, 102, 241, 0.15);
-  --shadow-btn: 0 4px 15px rgba(99, 102, 241, 0.4);
+  --shadow-glow: 0 0 40px rgba(249, 115, 22, 0.15);
+  --shadow-btn: 0 4px 15px rgba(249, 115, 22, 0.4);
 
   --transition: 0.2s ease;
+
+  /* Toggle button */
+  --toggle-bg: #1e2a3a;
+  --toggle-border: rgba(249, 115, 22, 0.35);
+}
+
+/* =========================================
+   LIGHT THEME
+   ========================================= */
+[data-theme="light"] {
+  --bg-base: #f8f9fb;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f1f3f7;
+  --bg-card: #ffffff;
+  --bg-hover: #f0f2f6;
+
+  /* Orange accent for light theme */
+  --accent-primary: #ea6c00;
+  --accent-primary-glow: rgba(234, 108, 0, 0.2);
+  --accent-secondary: #f97316;
+  --accent-success: #059669;
+  --accent-warning: #d97706;
+  --accent-danger: #dc2626;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+
+  --border-subtle: rgba(234, 108, 0, 0.25);
+  --border-card: rgba(0, 0, 0, 0.08);
+  --border-focus: #ea6c00;
+
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.08);
+  --shadow-glow: 0 0 40px rgba(234, 108, 0, 0.12);
+  --shadow-btn: 0 4px 15px rgba(234, 108, 0, 0.35);
+
+  /* Toggle button */
+  --toggle-bg: #f1f3f7;
+  --toggle-border: rgba(234, 108, 0, 0.3);
 }
 
 * {
@@ -80,6 +124,7 @@ body {
   top: 0;
   height: 100vh;
   overflow-y: auto;
+  transition: background var(--transition), border-color var(--transition);
 }
 
 .sidebar-logo {
@@ -515,7 +560,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: linear-gradient(135deg, var(--accent-primary), #4f46e5);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
   color: #fff;
   border: none;
   border-radius: var(--radius-sm);
@@ -531,7 +576,7 @@ body {
 .btn-primary:hover:not(:disabled) {
   filter: brightness(1.1);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+  box-shadow: 0 6px 20px var(--accent-primary-glow);
 }
 
 .btn-primary:active {
@@ -610,7 +655,7 @@ body {
 
 .filter-chip:hover,
 .filter-chip.active {
-  background: rgba(99, 102, 241, 0.15);
+  background: var(--accent-primary-glow);
   border-color: var(--border-subtle);
   color: var(--accent-primary);
 }
@@ -709,7 +754,102 @@ body {
   border-radius: 999px;
   font-size: 0.72rem;
   font-weight: 600;
-  background: rgba(6, 182, 212, 0.1);
+  background: var(--accent-primary-glow);
   color: var(--accent-secondary);
-  border: 1px solid rgba(6, 182, 212, 0.25);
+  border: 1px solid var(--border-subtle);
+}
+
+/* =========================================
+   SIDEBAR FOOTER & THEME TOGGLE
+   ========================================= */
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 0.75rem;
+  border-top: 1px solid var(--border-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  background: var(--toggle-bg);
+  border: 1px solid var(--toggle-border);
+  border-radius: var(--radius-md);
+  padding: 0.55rem 0.75rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.theme-toggle-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background: var(--accent-primary-glow);
+  box-shadow: 0 0 0 2px var(--accent-primary-glow);
+}
+
+.theme-toggle-track {
+  flex-shrink: 0;
+  width: 38px;
+  height: 22px;
+  background: var(--accent-primary);
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  transition: background var(--transition);
+  position: relative;
+}
+
+.theme-toggle-thumb {
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  transition: transform var(--transition);
+  transform: translateX(0);
+}
+
+[data-theme="light"] .theme-toggle-thumb {
+  transform: translateX(16px);
+}
+
+.theme-toggle-label {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.sidebar-version {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Global theme transition */
+body,
+.sidebar,
+.main-content,
+.card,
+.stat-card,
+.modal-box,
+.data-table th {
+  transition:
+    background-color var(--transition),
+    border-color var(--transition),
+    color var(--transition);
 }

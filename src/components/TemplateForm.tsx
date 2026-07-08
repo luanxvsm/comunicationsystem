@@ -35,6 +35,16 @@ export function TemplateForm({ onSuccess, initialData }: TemplateFormProps) {
     body: initialData?.body ?? "",
   });
 
+  // Detecta variáveis no assunto e no corpo em tempo real
+  const detectedVariables = Array.from(
+    new Set(
+      [
+        ...(form.messageType === "EMAIL" && form.subject ? Array.from(form.subject.matchAll(/\{\{(\w+)\}\}/g)) : []),
+        ...Array.from(form.body.matchAll(/\{\{(\w+)\}\}/g))
+      ].map((m) => m[1])
+    )
+  );
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const createMutation = trpc.templates.create.useMutation({
@@ -164,9 +174,31 @@ export function TemplateForm({ onSuccess, initialData }: TemplateFormProps) {
           value={form.body}
           onChange={(e) => setForm({ ...form, body: e.target.value })}
         />
-        <p className="form-hint">
-          Use {"{{variavel}}"} para campos dinâmicos.
-        </p>
+        {detectedVariables.length > 0 ? (
+          <div style={{ marginTop: "0.5rem", display: "flex", gap: "0.35rem", flexWrap: "wrap", alignItems: "center" }}>
+            <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginRight: "0.15rem" }}>Variáveis detectadas:</span>
+            {detectedVariables.map((v) => (
+              <span
+                key={v}
+                style={{
+                  fontSize: "0.7rem",
+                  background: "rgba(99, 102, 241, 0.15)",
+                  color: "#818cf8",
+                  padding: "0.15rem 0.45rem",
+                  borderRadius: "var(--radius-sm, 4px)",
+                  border: "1px solid rgba(99, 102, 241, 0.3)",
+                  fontWeight: 600
+                }}
+              >
+                {v}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="form-hint">
+            Use {"{{variavel}}"} para campos dinâmicos.
+          </p>
+        )}
         {errors.body && <p className="form-error">{errors.body}</p>}
       </div>
 

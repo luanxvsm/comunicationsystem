@@ -22,7 +22,7 @@ export default function MessagesPage() {
         messageType: typeFilter !== "ALL" ? typeFilter : undefined,
       },
       {
-        getNextPageParam: (lastPage) => lastPage.nextCursor,
+        getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
         initialCursor: undefined,
       }
     );

@@ -20,11 +20,14 @@ export function validateWebhookSignature(
       .update(payload)
       .digest("hex");
 
+    const expectedBuf = Buffer.from(expected, "utf8");
+    const signatureBuf = Buffer.from(signature, "utf8");
+
+    // timingSafeEqual exige buffers do mesmo tamanho; compara comprimentos primeiro
+    if (expectedBuf.length !== signatureBuf.length) return false;
+
     // timingSafeEqual previne timing attacks
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expected)
-    );
+    return crypto.timingSafeEqual(signatureBuf, expectedBuf);
   } catch {
     return false;
   }

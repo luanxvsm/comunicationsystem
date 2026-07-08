@@ -13,6 +13,7 @@ interface Message {
   status: "PENDING" | "SENT" | "FAILED";
   sentAt?: Date | null;
   createdAt: Date;
+  error?: string | null;
   contact?: { id: string; name: string } | null;
 }
 
@@ -96,6 +97,20 @@ export function MessageTable({ messages, isLoading }: MessageTableProps) {
                   <span className="body-preview">
                     {msg.body.slice(0, 60)}
                     {msg.body.length > 60 ? "…" : ""}
+                  </span>
+                )}
+                {msg.status === "FAILED" && msg.error && (
+                  <span
+                    style={{
+                      display: "block",
+                      fontSize: "0.7rem",
+                      color: "#f87171",
+                      marginTop: "0.25rem",
+                      opacity: 0.85,
+                    }}
+                    title={msg.error}
+                  >
+                    ⚠ {msg.error.length > 80 ? msg.error.slice(0, 80) + "…" : msg.error}
                   </span>
                 )}
               </td>

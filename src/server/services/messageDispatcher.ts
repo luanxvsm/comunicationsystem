@@ -8,6 +8,7 @@ import { sendWhatsapp } from "./sendWhatsapp";
 /**
  * Busca a mensagem no banco pelo ID e despacha para o canal correto.
  * Atualiza o status para SENT ou FAILED conforme o resultado.
+ * Salva o providerMessageId (SID do Twilio / x-message-id do SendGrid) para rastreamento.
  */
 export async function messageDispatcher(messageId: string): Promise<void> {
   const message = await db.message.findUniqueOrThrow({
@@ -15,15 +16,17 @@ export async function messageDispatcher(messageId: string): Promise<void> {
   });
 
   try {
+    let providerMessageId: string | undefined;
+
     switch (message.messageType) {
       case MessageType.EMAIL:
-        await sendEmail(message);
+        providerMessageId = await sendEmail(message);
         break;
       case MessageType.SMS:
-        await sendSms(message);
+        providerMessageId = await sendSms(message);
         break;
       case MessageType.WHATSAPP:
-        await sendWhatsapp(message);
+        providerMessageId = await sendWhatsapp(message);
         break;
       default:
         throw new Error(`Canal não suportado: ${message.messageType}`);
@@ -31,7 +34,11 @@ export async function messageDispatcher(messageId: string): Promise<void> {
 
     await db.message.update({
       where: { id: messageId },
-      data: { status: "SENT", sentAt: new Date() },
+      data: {
+        status: "SENT",
+        sentAt: new Date(),
+        providerMessageId: providerMessageId ?? null,
+      },
     });
   } catch (error) {
     await db.message.update({
